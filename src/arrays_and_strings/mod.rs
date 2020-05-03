@@ -81,6 +81,54 @@ fn is_odd(&x: &i8) -> bool {
     x % 2 != 0
 }
 
+fn string_distance(s1: &str, s2: &str) -> u8 {
+    if s1.is_empty() && s2.is_empty() {
+        return 0
+    } else if s1.is_empty() || s2.is_empty() {
+        return s1.len().max(s2.len()) as u8;
+    } else {
+        if s1.chars().nth(0).unwrap() == s2.chars().nth(0).unwrap() {
+            return string_distance(&s1[1..], &s2[1..])
+        } else {
+            return 1 + string_distance(&s1[0..], &s2[1..]) // remove
+                .min(string_distance(&s1[1..], &s2[0..])) // insert
+                .min(string_distance(&s1[1..], &s2[1..])) // replace
+        }
+    }
+}
+
+fn compress_string(s: &str) -> String {
+    if s.is_empty() || s.len() <= 2 {
+        return s.to_string();
+    }
+
+    let mut current_char: char = s.chars().nth(0).unwrap();
+    let mut char_count: i8 = 0;
+    let mut compressed: String = String::from("");
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == current_char {
+            char_count += 1;
+        } else {
+            compressed.push(current_char);
+            compressed.push_str(&char_count.to_string());
+            current_char = c;
+            char_count = 1;
+        }
+
+        if chars.peek().is_none() {
+            compressed.push(current_char);
+            compressed.push_str(&char_count.to_string());
+        }
+    }
+
+    if compressed.len() < s.len() {
+        compressed
+    } else {
+        s.to_string()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -107,5 +155,18 @@ mod test {
         assert!(is_palindrome_permutation("tacocat"));
         assert!(is_palindrome_permutation("taco cat"));
         assert!(!is_palindrome_permutation("tacodog"));
+    }
+
+    #[test]
+    fn test_string_distance() {
+        assert_eq!(string_distance("pale", "ple"), 1);
+        assert_eq!(string_distance("pales", "pale"), 1);
+        assert_eq!(string_distance("pale", "bale"), 1);
+        assert_eq!(string_distance("pale", "bake"), 2);
+    }
+
+    #[test]
+    fn test_compress_string() {
+        assert_eq!(compress_string("aabcccccaaa"), String::from("a2b1c5a3"));
     }
 }
